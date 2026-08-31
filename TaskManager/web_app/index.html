@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudentConnect - Student Project Collaboration Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="user-info">
+      <div class="avatar" id="userAvatar">A</div>
+      <div>
+        <div class="user-name" id="userName">Alex Morgan</div>
+        <div class="user-sub">StudentConnect Lead</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="switchNav('notifications')" title="Notifications">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Scrollable App Content -->
+  <main class="app-content">
+
+    <!-- VIEW 1: HOME SCREEN -->
+    <div id="view-home" class="view active">
+      <div>
+        <div class="section-title">
+          <span>My Projects</span>
+          <span class="see-all" onclick="switchNav('all-projects')">See All</span>
+        </div>
+        <div class="projects-slider" id="projectsSlider">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Tasks</div>
+        <div class="tabs-container">
+          <button class="tab-btn active" onclick="filterTasks('assigned', this)">Assigned</button>
+          <button class="tab-btn" onclick="filterTasks('inProgress', this)">InProgress</button>
+          <button class="tab-btn" onclick="filterTasks('completed', this)">Complete</button>
+        </div>
+      </div>
+
+      <div class="tasks-list" id="tasksList">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- VIEW 2: CREATE PROJECT -->
+    <div id="view-create-project" class="view">
+      <div class="section-title">Create Project</div>
+      
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" id="inputProjName" class="form-control" placeholder="e.g. Final Year Capstone">
+      </div>
+
+      <div class="form-group">
+        <label>Project Description</label>
+        <textarea id="inputProjDesc" class="form-control" placeholder="Describe your academic project goals, requirements, and scope..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Add Teammates</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="email" id="inputTeammateEmail" class="form-control" placeholder="i.e: teammate@university.edu">
+          <button style="width: auto; padding: 0 16px;" class="btn-primary" onclick="addTeammateChip()">Add</button>
+        </div>
+        <div class="chips-container" id="teammateChips"></div>
+      </div>
+
+      <button class="btn-primary" style="margin-top: 12px;" onclick="handleCreateProject()">Create Project</button>
+    </div>
+
+    <!-- VIEW 3: ALL PROJECTS -->
+    <div id="view-all-projects" class="view">
+      <div class="section-title">All Projects</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" id="allProjectsGrid">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- VIEW 4: PROJECT DETAILS -->
+    <div id="view-project-details" class="view">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="icon-btn" onclick="switchNav('home')">←</button>
+        <div class="section-title" style="margin-bottom:0;" id="detailProjTitle">Project Details</div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <div style="flex:1; background:#EEF2FF; padding:12px; border-radius:12px;">
+          <div style="font-size:0.75rem; color:var(--text-muted);">Started on</div>
+          <div style="font-weight:700;" id="detailProjDate">17/08/2026</div>
+        </div>
+        <div style="flex:1; background:#EEF2FF; padding:12px; border-radius:12px;">
+          <div style="font-size:0.75rem; color:var(--text-muted);">Team Lead</div>
+          <div style="font-weight:700;" id="detailProjLead">Alex Morgan</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <div style="color:var(--text-muted); font-size:0.9rem; line-height:1.4;" id="detailProjDesc">
+          Loading project description...
+        </div>
+      </div>
+
+      <div class="section-title">Tasks</div>
+      <div class="tasks-list" id="detailTasksList">
+        <!-- Dynamically populated -->
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 12px;">
+        <button class="btn-primary" style="font-size:0.8rem; padding:10px;" onclick="openAddTeammateModal()">Add Teammate</button>
+        <button class="btn-primary" style="font-size:0.8rem; padding:10px; background:linear-gradient(135deg, var(--accent), var(--accent-light));" onclick="openAddTaskModal()">Add Task</button>
+        <button class="btn-primary" style="font-size:0.8rem; padding:10px; background:linear-gradient(135deg, var(--purple), var(--purple-light));" onclick="openDocumentation()">View Docs</button>
+      </div>
+    </div>
+
+    <!-- VIEW 5: DOCUMENTATION -->
+    <div id="view-documentation" class="view">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="icon-btn" onclick="switchNav('project-details')">←</button>
+        <div class="section-title" style="margin-bottom:0;">Project Documentation</div>
+      </div>
+
+      <div class="form-group">
+        <label>Document Title</label>
+        <input type="text" id="docTitle" class="form-control" placeholder="e.g. Architecture Overview & SRS">
+      </div>
+
+      <div class="form-group">
+        <label>Document Content</label>
+        <textarea id="docContent" class="form-control" placeholder="Enter meeting notes, API specifications, or academic references..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="handleAddDoc()">Add Document</button>
+
+      <div class="section-title" style="margin-top:12px;">All Documents</div>
+      <div class="tasks-list" id="docsList">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- VIEW 6: NOTIFICATIONS -->
+    <div id="view-notifications" class="view">
+      <div class="section-title">Notifications</div>
+      <div class="tasks-list" id="notificationsList">
+        <div class="task-tile">
+          <div class="task-info">
+            <div class="task-name">Deadline Reminder</div>
+            <div class="task-sub">Final Capstone Presentation is due today</div>
+          </div>
+          <span class="badge badge-indigo">Today</span>
+        </div>
+        <div class="task-tile">
+          <div class="task-info">
+            <div class="task-name">Teammate Joined</div>
+            <div class="task-sub">sarah@university.edu joined Mobile App Project</div>
+          </div>
+          <span class="badge badge-teal">Yesterday</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchNav('home')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home
+    </button>
+    <button class="nav-item" onclick="switchNav('create-project')">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Create
+    </button>
+    <button class="nav-item" onclick="switchNav('all-projects')">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      Projects
+    </button>
+    <button class="nav-item" onclick="switchNav('notifications')">
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      Alerts
+    </button>
+  </nav>
+
+  <!-- MODALS -->
+  <!-- Add Task Modal -->
+  <div class="modal-overlay" id="modalAddTask">
+    <div class="modal-content">
+      <div class="section-title">Add Task</div>
+      <div class="form-group">
+        <label>Task Title</label>
+        <input type="text" id="inputTaskTitle" class="form-control" placeholder="e.g. Implement Auth Logic">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="inputTaskDesc" class="form-control" placeholder="Task requirements..."></textarea>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <div class="form-group" style="flex:1;">
+          <label>Deadline Date</label>
+          <input type="date" id="inputTaskDate" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Time</label>
+          <input type="time" id="inputTaskTime" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Assign to Teammate</label>
+        <select id="selectTeammate" class="form-control">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary" onclick="handleAddTask()">Save Task</button>
+        <button class="btn-primary" style="background:#64748B;" onclick="closeModals()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Teammate Modal -->
+  <div class="modal-overlay" id="modalAddTeammate">
+    <div class="modal-content">
+      <div class="section-title">Add Teammates</div>
+      <div class="form-group">
+        <label>Teammate Email</label>
+        <input type="email" id="modalTeammateEmail" class="form-control" placeholder="i.e: classmate@university.edu">
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary" onclick="handleAddTeammateDirect()">Add Teammate</button>
+        <button class="btn-primary" style="background:#64748B;" onclick="closeModals()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
