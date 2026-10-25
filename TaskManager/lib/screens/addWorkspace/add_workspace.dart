@@ -30,28 +30,34 @@ class _AddWorkspaceState extends State<AddWorkspace>
   late AnimationController controller;
   late Animation<double> animation;
 
+  late final TextEditingController projectName;
+  late final TextEditingController projectDesc;
+  late final TextEditingController memberEmail;
+
   List<String> memberEmails = [];
   @override
   void initState() {
     super.initState();
+    projectName = TextEditingController();
+    projectDesc = TextEditingController();
+    memberEmail = TextEditingController();
     controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 2));
+        AnimationController(vsync: this, duration: const Duration(seconds: 2));
 
     animation = Tween(begin: 0.0, end: 1.0).animate(controller);
   }
 
   @override
   void dispose() {
+    projectName.dispose();
+    projectDesc.dispose();
+    memberEmail.dispose();
     controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController projectName = TextEditingController();
-    TextEditingController projectDesc = TextEditingController();
-    TextEditingController memberEmail = TextEditingController();
-
     return header(
       child: SingleChildScrollView(
         key: ValueKey<int>(2),
@@ -192,11 +198,16 @@ class _AddWorkspaceState extends State<AddWorkspace>
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  DateTime? date = DateTime.now();
+                  String pending = memberEmail.text.trim();
+                  if (pending.isNotEmpty && !memberEmails.contains(pending)) {
+                    memberEmails.add(pending);
+                    memberEmail.clear();
+                  }
+                  DateTime date = DateTime.now();
                   BlocProvider.of<ProjectBloc>(context).add(AddProject(
                       projectName.text,
                       projectDesc.text,
-                      memberEmails,
+                      List<String>.from(memberEmails),
                       "${date.day}/${date.month}/${date.year}"));
                 },
                 style: ElevatedButton.styleFrom(
@@ -226,6 +237,7 @@ class _AddWorkspaceState extends State<AddWorkspace>
 
                   projectDesc.clear();
                   projectName.clear();
+                  memberEmails.clear();
                   BlocProvider.of<MemberBloc>(context).add(AddAllMember());
                 } else if (state is ErrorState) {
                   Utils.showSnackBar(state.message);

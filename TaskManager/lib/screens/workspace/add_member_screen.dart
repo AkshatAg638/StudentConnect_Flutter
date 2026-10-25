@@ -17,153 +17,209 @@ import 'package:studentconnect/injection/database.dart';
 import 'package:studentconnect/widgets/text.dart';
 import 'package:studentconnect/widgets/workspace/header.dart';
 
-class AddMemberScreen extends StatelessWidget {
+class AddMemberScreen extends StatefulWidget {
   const AddMemberScreen({super.key});
 
   @override
+  State<AddMemberScreen> createState() => _AddMemberScreenState();
+}
+
+class _AddMemberScreenState extends State<AddMemberScreen> {
+  late final TextEditingController emailController;
+  final project = locator<Database>;
+
+  @override
+  void initState() {
+    super.initState();
+    emailController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // final projectController = Get.put(ProjectController());
-    final TextEditingController emailController = TextEditingController();
-    var project = locator<Database>;
-    return header(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AddMemberToProjectBloc, AddMemberToProjectStates>(
+          listener: (context, state) {
+            if (state is MemberAddedToProjectState) {
+              Utils.showSnackBar(state.message);
+            } else if (state is AddErrorState) {
+              Utils.showSnackBar(state.message);
+            }
+          },
+        ),
+        BlocListener<RemoveMemberFromProjectBloc, RemoveMemberFromProjectStates>(
+          listener: (context, state) {
+            if (state is MemberRemovedFromProjectState) {
+              Utils.showSnackBar(state.message);
+            } else if (state is ErrorState) {
+              Utils.showSnackBar(state.message);
+            }
+          },
+        ),
+      ],
+      child: header(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
                   onPressed: () {
                     Get.back();
                   },
-                  icon: Icon(Icons.arrow_back_ios)),
-              Expanded(
-                child: Container(
-                  alignment: Alignment.topLeft,
-                  padding: EdgeInsets.symmetric(
-                    vertical: Get.height * 0.02,
-                  ),
-                  child: text(
+                  icon: const Icon(Icons.arrow_back_ios),
+                ),
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    padding: EdgeInsets.symmetric(
+                      vertical: Get.height * 0.02,
+                    ),
+                    child: text(
                       title: 'Add Members',
                       fontSize: Get.width * 0.05,
                       fontWeight: AppFonts.semiBold,
                       color: AppColors.black,
-                      align: TextAlign.start),
+                      align: TextAlign.start,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            TextFormField(
+              controller: emailController,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              autofillHints: const [AutofillHints.email],
+              decoration: InputDecoration(
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    if (emailController.text.trim().isNotEmpty) {
+                      BlocProvider.of<AddMemberToProjectBloc>(context).add(
+                          AddMemberToProject(
+                              memberEmail: emailController.text.trim()));
+                      emailController.clear();
+                    }
+                  },
+                  icon: const Icon(Icons.person_add_alt_1_outlined),
+                ),
+                hintText: "i.e: student@university.edu",
+                hintStyle: TextStyle(
+                  color: AppColors.grey,
+                  fontSize: Get.width * 0.04,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(Get.width * 0.03),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(Get.width * 0.03),
                 ),
               ),
-            ],
-          ),
-          TextFormField(
-            controller: emailController,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            autofillHints: [AutofillHints.email],
-            decoration: InputDecoration(
-              suffixIcon: IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.person_add_alt_1_outlined),
-              ),
-              hintText: "i.e: abc@gmail.com",
-              hintStyle: TextStyle(
-                color: AppColors.grey,
-                fontSize: Get.width * 0.04,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(Get.width * 0.03),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(Get.width * 0.03),
-              ),
             ),
-          ),
-          Container(
-            alignment: Alignment.topLeft,
-            padding: EdgeInsets.only(top: Get.height * 0.02),
-            child: text(
+            Container(
+              alignment: Alignment.topLeft,
+              padding: EdgeInsets.only(top: Get.height * 0.02),
+              child: text(
                 title: 'Added Members',
-                fontSize: Get.width * 0.03,
+                fontSize: Get.width * 0.035,
                 fontWeight: AppFonts.semiBold,
                 color: AppColors.grey,
-                align: TextAlign.start),
-          ),
-          Expanded(
-            child: StreamBuilder<Object>(
+                align: TextAlign.start,
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<DocumentSnapshot>(
                 stream: project().getMembersOfProject(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.connectionState ==
-                          ConnectionState.active &&
-                      snapshot.hasData) {
-                    DocumentSnapshot snap = snapshot.data as DocumentSnapshot;
+                  } else if (snapshot.hasData && snapshot.data != null) {
+                    DocumentSnapshot snap = snapshot.data!;
+                    List<dynamic> emails = [];
+                    try {
+                      emails = snap.get('email') ?? [];
+                    } catch (_) {}
 
-                    return snap['email'].length != 0
+                    return emails.isNotEmpty
                         ? ListView.builder(
                             padding: EdgeInsets.only(
                               top: Get.height * 0.02,
                             ),
                             physics: const BouncingScrollPhysics(),
-                            itemCount: snap['email'].length,
+                            itemCount: emails.length,
                             itemBuilder: (context, index) {
-                              print("members length:${snap['email']}");
+                              String memberEmail = emails[index].toString();
                               return ListTile(
                                 title: text(
-                                    title: snap['email'][index],
-                                    fontSize: Get.width * 0.04,
-                                    fontWeight: AppFonts.regular,
-                                    color: AppColors.black,
-                                    align: TextAlign.start),
+                                  title: memberEmail,
+                                  fontSize: Get.width * 0.04,
+                                  fontWeight: AppFonts.regular,
+                                  color: AppColors.black,
+                                  align: TextAlign.start,
+                                ),
                                 leading: SizedBox(
                                   width: Get.width * 0.1,
                                   height: Get.height * 0.1,
-                                  child: StreamBuilder(
-                                      stream: FirebaseFirestore.instance
-                                          .collection('User')
-                                          .where('email',
-                                              isEqualTo: snap['email'][index])
-                                          .snapshots(),
-                                      builder: (context, snapshot) {
-                                        if (snapshot.hasData) {
-                                          return CircleAvatar(
-                                            child: ClipOval(
-                                              child: snapshot
-                                                      .data!.docs.isNotEmpty
-                                                  ? CachedNetworkImage(
-                                                      imageUrl: snapshot.data!
-                                                          .docs[0]['photoUrl'],
-                                                    )
-                                                  : Icon(Icons.person),
-                                            ),
-                                          );
-                                        } else {
-                                          return Container();
-                                        }
-                                      }),
+                                  child: StreamBuilder<QuerySnapshot>(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('User')
+                                        .where('email', isEqualTo: memberEmail)
+                                        .snapshots(),
+                                    builder: (context, userSnap) {
+                                      String? photoUrl;
+                                      if (userSnap.hasData &&
+                                          userSnap.data!.docs.isNotEmpty) {
+                                        try {
+                                          photoUrl = userSnap
+                                              .data!.docs[0].get('photoUrl');
+                                        } catch (_) {}
+                                      }
+
+                                      return CircleAvatar(
+                                        backgroundColor: AppColors
+                                            .workspaceGradientColor1[0]
+                                            .withOpacity(0.2),
+                                        child: ClipOval(
+                                          child: (photoUrl != null &&
+                                                  photoUrl.isNotEmpty)
+                                              ? CachedNetworkImage(
+                                                  imageUrl: photoUrl,
+                                                  errorWidget:
+                                                      (context, url, err) =>
+                                                          const Icon(
+                                                              Icons.person,
+                                                              color: AppColors
+                                                                  .black),
+                                                  placeholder:
+                                                      (context, url) =>
+                                                          const Icon(
+                                                              Icons.person,
+                                                              color: AppColors
+                                                                  .grey),
+                                                )
+                                              : const Icon(Icons.person,
+                                                  color: AppColors.black),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                                trailing: BlocListener<
-                                    RemoveMemberFromProjectBloc,
-                                    RemoveMemberFromProjectStates>(
-                                  listener: (context, state) {
-                                    print(state);
-                                    if (state
-                                        is MemberRemovedFromProjectState) {
-                                      Utils.showSnackBar(state.message);
-                                    } else if (state is ErrorState) {
-                                      Utils.showSnackBar(state.message);
-                                    }
+                                trailing: IconButton(
+                                  onPressed: () {
+                                    BlocProvider.of<
+                                                RemoveMemberFromProjectBloc>(
+                                            context)
+                                        .add(RemoveMemberFromProject(
+                                            memberEmail: memberEmail));
                                   },
-                                  child: IconButton(
-                                      onPressed: () {
-                                        // print(snap['email'][index]);
-                                        BlocProvider.of<
-                                                    RemoveMemberFromProjectBloc>(
-                                                context)
-                                            .add(RemoveMemberFromProject(
-                                                memberEmail: snap['email']
-                                                    [index]));
-                                      },
-                                      icon: Icon(
-                                        Icons.cancel_outlined,
-                                        color: AppColors
-                                            .workspaceGradientColor1[1],
-                                      )),
+                                  icon: const Icon(
+                                    Icons.cancel_outlined,
+                                    color: AppColors.grey,
+                                  ),
                                 ),
                               );
                             },
@@ -180,17 +236,10 @@ class AddMemberScreen extends StatelessWidget {
                   } else {
                     return Container();
                   }
-                }),
-          ),
-          BlocListener<AddMemberToProjectBloc, AddMemberToProjectStates>(
-            listener: (context, state) {
-              if (state is MemberAddedToProjectState) {
-                Utils.showSnackBar(state.message);
-              } else if (state is AddErrorState) {
-                Utils.showSnackBar(state.message);
-              }
-            },
-            child: Container(
+                },
+              ),
+            ),
+            Container(
               width: Get.width,
               padding: EdgeInsets.symmetric(
                 vertical: Get.height * 0.01,
@@ -203,20 +252,24 @@ class AddMemberScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  BlocProvider.of<AddMemberToProjectBloc>(context).add(
-                      AddMemberToProject(memberEmail: emailController.text));
-                  emailController.clear();
+                  if (emailController.text.trim().isNotEmpty) {
+                    BlocProvider.of<AddMemberToProjectBloc>(context).add(
+                        AddMemberToProject(
+                            memberEmail: emailController.text.trim()));
+                    emailController.clear();
+                  }
                 },
                 child: text(
-                    title: 'Add',
-                    fontSize: Get.width * 0.04,
-                    fontWeight: AppFonts.semiBold,
-                    color: AppColors.black,
-                    align: TextAlign.start),
+                  title: 'Add',
+                  fontSize: Get.width * 0.04,
+                  fontWeight: AppFonts.semiBold,
+                  color: AppColors.white,
+                  align: TextAlign.start,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

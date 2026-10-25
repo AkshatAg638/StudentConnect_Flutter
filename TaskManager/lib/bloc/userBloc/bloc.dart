@@ -12,26 +12,26 @@ class LoginSignUpBloc extends Bloc<UserEvents, UserStates> {
 
     on<GoogleSigning>((event, emit) async {
       if (event.loading == true) {
-        emit(Userloading(event.loading));
+        emit(Userloading(true));
         UserCredential? user = await Auth.googleSignin();
-        if(user!=null)
-        {event.loading = false;
-        emit(Userloading(event.loading));}
+        if (user != null && user.user != null) {
+          emit(Userloading(false));
+          emit(UserAuthenticated());
+        } else {
+          emit(Userloading(false));
+          emit(UserAuthenticationFailed("Sign in cancelled or failed"));
+          emit(EnableGoogleSignin());
+        }
       } else {
-        emit(Userloading(event.loading));
+        emit(Userloading(false));
       }
     });
 
-    on<Logout>((event, emit) {
-      if (event.isLogout == false) {
-        
-        Auth.GoogleLogout();
-        
-        event.isLogout = true;
-        emit(Userloading(event.isLogout));
-      } else {
-        emit(Userloading(event.isLogout));
-      }
+    on<Logout>((event, emit) async {
+      emit(Userloading(true));
+      await Auth.GoogleLogout();
+      emit(Userloading(false));
+      emit(UserLoggedOut());
     });
   }
 }

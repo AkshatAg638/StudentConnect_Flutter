@@ -147,7 +147,7 @@ class NotificationServices {
     }
   }
 
-// redirect when app is in backgrounf
+// redirect when app is in background
   Future<void> setupInteractMessage(BuildContext context) async {
     // when app is terminated
     RemoteMessage? initialMessage =
@@ -156,11 +156,52 @@ class NotificationServices {
       handleMessage(context, initialMessage);
     }
 
-//when app is in background
-
+    // when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen((event) {
       handleMessage(context, event);
     });
   }
 
+  // Show a local notification banner
+  Future<void> showLocalNotification({
+    required String title,
+    required String body,
+  }) async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'deadline_reminder_channel',
+      'Deadline Reminders',
+      channelDescription: 'Notifications for academic project and task deadlines',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const DarwinNotificationDetails darwinNotificationDetails =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+      iOS: darwinNotificationDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      Random().nextInt(100000),
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
+  // Send FCM / notification reminder for a project
+  Future<void> sendFCM({required String projectName}) async {
+    await showLocalNotification(
+      title: 'Task Reminder',
+      body: 'You have a deadline today in $projectName',
+    );
+  }
 }

@@ -41,20 +41,33 @@ class Notifications extends StatelessWidget {
             child: StreamBuilder(
                 stream: FirebaseFirestore.instance
                     .collection('Notifications')
-                    .where('receiveTo', isEqualTo: Auth.auth.currentUser!.uid)
+                    .where('receiveTo',
+                        isEqualTo: Auth.currentUser?.uid ?? '')
                     .orderBy('receiveDate', descending: true)
                     .limit(5)
                     .snapshots(),
-
-                // project().getNotificationList(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: text(
+                        title: 'No notifications',
+                        fontSize: Get.width * 0.04,
+                        fontWeight: AppFonts.semiBold,
+                        color: AppColors.grey,
+                        align: TextAlign.center,
+                      ),
+                    );
+                  }
                   if (!snapshot.hasData) {
                     return const Center(
-                      child: CircularProgressIndicator(),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     );
                   } else {
-                    return snapshot.data!.docs.isNotEmpty &&
-                            snapshot.connectionState == ConnectionState.active
+                    return snapshot.data!.docs.isNotEmpty
                         ? ListView.builder(
                             itemCount: snapshot.data!.docs.length,
                             itemBuilder: (context, index) {

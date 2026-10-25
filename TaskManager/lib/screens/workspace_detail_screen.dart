@@ -84,7 +84,6 @@ class WorkspaceDetail extends StatelessWidget {
         scrollDirection: Axis.vertical,
         child: Container(
           width: Get.width,
-          height: Get.height,
           padding: EdgeInsets.symmetric(
             horizontal: Get.width * 0.06,
             vertical: Get.height * 0.02,
@@ -219,22 +218,22 @@ class WorkspaceDetail extends StatelessWidget {
                   align: TextAlign.start,
                 ),
               ),
-              Expanded(
-                child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection('Tasks')
-                        .doc(projectController.projectId.string)
-                        .collection('projectTasks')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      } else {
-                        return snapshot.data!.docs.isNotEmpty
-                            ? ListView.builder(
-                                physics: const NeverScrollableScrollPhysics(),
+              StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('Tasks')
+                      .doc(projectController.projectId.string)
+                      .collection('projectTasks')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else {
+                      return snapshot.data!.docs.isNotEmpty
+                          ? ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
                                 itemCount: snapshot.data!.docs.length,
                                 itemBuilder: (context, index) {
                                   DocumentSnapshot snap =
@@ -539,7 +538,6 @@ class WorkspaceDetail extends StatelessWidget {
                               );
                       }
                     }),
-              ),
             ],
           ),
         ),

@@ -9,16 +9,34 @@ import 'package:studentconnect/injection/database.dart';
 import 'package:studentconnect/widgets/text.dart';
 import 'package:studentconnect/widgets/workspace/header.dart';
 
-class Comments extends StatelessWidget {
+class Comments extends StatefulWidget {
   const Comments({super.key});
 
   @override
+  State<Comments> createState() => _CommentsState();
+}
+
+class _CommentsState extends State<Comments> {
+  late final TextEditingController commentController;
+  final project = locator<Database>;
+
+  @override
+  void initState() {
+    super.initState();
+    commentController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String id = Get.arguments;
+    String id = Get.arguments?.toString() ?? '';
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
-    TextEditingController commentController = TextEditingController();
-    var project = locator<Database>;
 
     return header(
       child: SingleChildScrollView(

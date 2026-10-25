@@ -42,13 +42,27 @@ class AllWorkspace extends StatelessWidget {
               child: StreamBuilder(
                 stream: project().getAllProjects(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: text(
+                        title: 'No Projects to display',
+                        align: TextAlign.center,
+                        color: AppColors.grey,
+                        fontSize: Get.width * 0.045,
+                        fontWeight: AppFonts.semiBold,
+                      ),
+                    );
+                  }
                   if (!snapshot.hasData) {
                     return const Center(
-                      child: CircularProgressIndicator(),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     );
                   } else {
-                    return snapshot.data!.docs.isNotEmpty &&
-                            snapshot.connectionState == ConnectionState.active
+                    return snapshot.data!.docs.isNotEmpty
                         ? GridView.builder(
                             itemCount: snapshot.data!.docs.length,
                             padding: EdgeInsets.only(

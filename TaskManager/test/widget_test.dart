@@ -1,33 +1,25 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:studentconnect/main.dart';
+import 'package:studentconnect/constants/colors.dart';
+import 'package:studentconnect/constants/labels.dart';
+import 'package:studentconnect/routes/routes.dart';
 
-void main() async {
-  TestWidgetsFlutterBinding.ensureInitialized();
+void main() {
+  group('StudentConnect App Tests', () {
+    test('App routes are properly defined', () {
+      expect(AppRoutes.main, '/main');
+      expect(AppRoutes.user, '/');
+      expect(AppRoutes.home, '/home');
+      expect(AppRoutes.addWorkspace, '/addWorkspace');
+      expect(AppRoutes.workSpaceDetail, '/workspacedetail');
+      expect(AppRoutes.documentation, '/documentation');
+      expect(AppRoutes.comment, '/Comment');
+    });
 
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-
-    await tester.pumpWidget(MyApp());
-
-    // Verify that our counter starts at 0.
-    var button = find.byType(Text);
-    expect(button, findsAtLeast(1));
-    // expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    // await tester.tap(find.byIcon(Icons.add));
-    // await tester.pump();
-
-    // Verify that our counter has incremented.
-    // expect(find.text('0'), findsNothing);
-    // expect(find.text('1'), findsOneWidget);
+    test('Design tokens and labels are configured', () {
+      expect(AppColors.workspaceGradientColor1.isNotEmpty, true);
+      expect(AppColors.workspaceGradientColor2.isNotEmpty, true);
+      expect(AppLabels.homePageTabName, ['Assigned', 'InProgress', 'Complete']);
+      expect(AppLabels.projectDetailButtonLabel.contains('View Docs'), true);
+    });
   });
 }

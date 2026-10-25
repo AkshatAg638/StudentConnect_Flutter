@@ -11,30 +11,40 @@ class ProjectBloc extends Bloc<ProjectEvents, ProjectStates> {
 
   ProjectBloc() : super(InitialState()) {
     on<AddProject>((event, emit) async {
-      if (event.projectName.isNotEmpty &&
-          event.projectDescription.isNotEmpty &&
-          event.memberEmail.isNotEmpty) {
-        SendEmail.sendEmail(
-          email: event.memberEmail,
-          subject: event.projectName,
-          projectName: event.projectName,
-        );
-        event.memberEmail.add(Auth.auth.currentUser!.email!);
-        bool added = await addProject().addWorkspace(
+      String name = event.projectName.trim();
+      String desc = event.projectDescription.trim();
+
+      if (name.isEmpty || desc.isEmpty) {
+        emit(ErrorState("Please enter Project Name and Description"));
+        return;
+      }
+
+      String userEmail = Auth.currentUser?.email ?? 'student@connect.edu';
+      List<String> allMembers = List<String>.from(event.memberEmail);
+      if (!allMembers.contains(userEmail)) {
+        allMembers.add(userEmail);
+      }
+
+      if (event.memberEmail.isNotEmpty) {
+        try {
+          SendEmail.sendEmail(
             email: event.memberEmail,
-            projectDescription: event.projectDescription,
-            projectName: event.projectName,
-            creationDate: event.creationDate);
+            subject: name,
+            projectName: name,
+          );
+        } catch (_) {}
+      }
 
-        if (added) {
-          print(event.memberEmail.length);
+      bool added = await addProject().addWorkspace(
+          email: allMembers,
+          projectDescription: desc,
+          projectName: name,
+          creationDate: event.creationDate);
 
-          emit(ProjectAdded("Project has been created Successfully"));
-        } else {
-          emit(ErrorState("Project is not created: Try Again"));
-        }
+      if (added) {
+        emit(ProjectAdded("Project has been created Successfully"));
       } else {
-        emit(ErrorState("Fill all the fields carefully"));
+        emit(ErrorState("Project is not created: Try Again"));
       }
     });
   }

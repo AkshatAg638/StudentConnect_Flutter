@@ -41,11 +41,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    notification.requestPermission();
-
-    notification.firebaseinit(context);
-    notification.setupInteractMessage(context);
     super.initState();
+    try {
+      notification.requestPermission();
+      notification.firebaseinit(context);
+      notification.setupInteractMessage(context);
+    } catch (e) {
+      debugPrint('Notification init skipped: $e');
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Auth.currentUser == null) {
+        Get.offAllNamed(AppRoutes.user);
+      }
+    });
   }
 
   @override
@@ -58,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0.0,
         scrolledUnderElevation: 0.0,
         title: text(
-          title: Auth.auth.currentUser!.displayName.toString(),
+          title: Auth.currentUser?.displayName ?? 'Student',
           fontSize: Get.width * 0.06,
           fontWeight: AppFonts.bold,
           color: AppColors.black,
@@ -69,19 +77,39 @@ class _HomeScreenState extends State<HomeScreen> {
             left: Get.width * 0.04,
           ),
           child: CircleAvatar(
+            backgroundColor:
+                AppColors.workspaceGradientColor1[0].withOpacity(0.2),
             child: ClipOval(
-                child: CachedNetworkImage(
-                    imageUrl: Auth.auth.currentUser!.photoURL.toString())),
+              child: (Auth.currentUser?.photoURL != null &&
+                      Auth.currentUser!.photoURL!.isNotEmpty)
+                  ? CachedNetworkImage(
+                      imageUrl: Auth.currentUser!.photoURL!,
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.person, color: AppColors.black),
+                      placeholder: (context, url) =>
+                          const Icon(Icons.person, color: AppColors.grey),
+                    )
+                  : const Icon(Icons.person, color: AppColors.black),
+            ),
           ),
         ),
         actions: [
           IconButton(
-            onPressed: () {
+            tooltip: 'Logout',
+            onPressed: () async {
+              Get.snackbar(
+                'Logging out...',
+                'Please wait',
+                snackPosition: SnackPosition.BOTTOM,
+                duration: const Duration(seconds: 1),
+              );
               BlocProvider.of<LoginSignUpBloc>(context).add(Logout(false));
+              await Auth.GoogleLogout();
+              Get.offAllNamed(AppRoutes.user);
             },
             icon: Icon(
               Icons.logout_outlined,
-              size: Get.width * 0.09,
+              size: Get.width * 0.08,
             ),
           ),
         ],
@@ -91,20 +119,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Builder(builder: (context) {
-              return BlocListener<LoginSignUpBloc, UserStates>(
-                listener: (context, state) {
-                  if (state is Userloading && state.loading == true) {
-                    print(state.loading);
-                    Get.snackbar(
-                        'Logging out... ', 'Wait a while it is being log out');
-
-                    Get.toNamed(AppRoutes.user);
-                  }
-                },
-                child: Container(),
-              );
-            }),
+            BlocListener<LoginSignUpBloc, UserStates>(
+              listener: (context, state) {
+                if (state is UserLoggedOut) {
+                  Get.offAllNamed(AppRoutes.user);
+                }
+              },
+              child: const SizedBox(),
+            ),
             Container(
               alignment: Alignment.centerLeft,
               margin: EdgeInsets.only(
@@ -124,11 +146,35 @@ class _HomeScreenState extends State<HomeScreen> {
               child: StreamBuilder(
                   stream: project().getCreatedProjects(),
                   builder: (context, snapshot) {
-                    return snapshot.hasData
-                        ? snapshot.data!.docs.isNotEmpty &&
-                                snapshot.connectionState ==
-                                    ConnectionState.active
-                            ? Row(
+                    if (snapshot.hasError) {
+                      return SizedBox(
+                        height: Get.height * 0.1,
+                        child: Center(
+                          child: text(
+                            title: 'No Projects to display',
+                            align: TextAlign.center,
+                            color: AppColors.grey,
+                            fontSize: Get.width * 0.035,
+                            fontWeight: AppFonts.semiBold,
+                          ),
+                        ),
+                      );
+                    }
+                    if (!snapshot.hasData) {
+                      return SizedBox(
+                        height: Get.height * 0.1,
+                        width: Get.width,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    return snapshot.data!.docs.isNotEmpty
+                        ? Row(
                                 children: List.generate(
                                   snapshot.data!.docs.length,
                                   (index) {
@@ -274,13 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     fontWeight: AppFonts.semiBold,
                                   ),
                                 ),
-                              )
-                        : SizedBox(
-                            width: Get.width,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
+                              );
                   }),
             ),
             Container(
@@ -353,14 +393,27 @@ class _HomeScreenState extends State<HomeScreen> {
                               : project()
                                   .getTasksAsPerStatus(taskStatus: 'Completed'),
                       builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: text(
+                              title: 'No Task to display',
+                              align: TextAlign.center,
+                              color: AppColors.black,
+                              fontSize: Get.width * 0.045,
+                              fontWeight: AppFonts.semiBold,
+                            ),
+                          );
+                        }
                         if (!snapshot.hasData) {
                           return const Center(
-                            child: CircularProgressIndicator(),
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           );
                         } else {
-                          return snapshot.data!.docs.isNotEmpty &&
-                                  snapshot.connectionState ==
-                                      ConnectionState.active
+                          return snapshot.data!.docs.isNotEmpty
                               ? AnimatedList(
                                   key: listKey,
                                   scrollDirection: Axis.vertical,

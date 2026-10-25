@@ -31,19 +31,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  void firebaseinit() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    firebaseinit();
-  }
-  // This widget is the root of your application.
-
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -52,21 +39,22 @@ class _MyAppState extends State<MyApp> {
       themeMode: ThemeMode.light,
       getPages: Pages.pages,
       initialRoute:
-          Auth.auth.currentUser == null ? AppRoutes.user : AppRoutes.main,
+          Auth.currentUser == null ? AppRoutes.user : AppRoutes.main,
       darkTheme: ThemeData(
-          scaffoldBackgroundColor: Colors.black,
-          textTheme: TextTheme(
-            bodyText1: TextStyle(color: Colors.white),
-          )),
+        scaffoldBackgroundColor: Colors.black,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+        ),
+      ),
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.white,
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
         ),
         textTheme: const TextTheme(
-          bodyText1: TextStyle(color: Colors.black),
+          bodyLarge: TextStyle(color: Colors.black),
         ),
       ),
     );

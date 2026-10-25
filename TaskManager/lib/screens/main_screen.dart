@@ -26,7 +26,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    project().sendDeadlineReminder();
+    try {
+      project().sendDeadlineReminder();
+    } catch (e) {
+      debugPrint('Deadline reminder skipped: $e');
+    }
   }
 
   @override

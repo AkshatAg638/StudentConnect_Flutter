@@ -27,23 +27,37 @@ class AddTask extends StatefulWidget {
 }
 
 class _AddTaskState extends State<AddTask> with SingleTickerProviderStateMixin {
-// void getMembers
-
   var project = locator<Database>;
+
+  late final TextEditingController task;
+  late final TextEditingController description;
+  late final TextEditingController date;
+  late final TextEditingController time;
+  late final TextEditingController AssignedTo;
+  final List<String> membersTaskAssignTo = [];
 
   @override
   void initState() {
     super.initState();
+    task = TextEditingController();
+    description = TextEditingController();
+    date = TextEditingController();
+    time = TextEditingController();
+    AssignedTo = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    task.dispose();
+    description.dispose();
+    date.dispose();
+    time.dispose();
+    AssignedTo.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController task = TextEditingController();
-    TextEditingController description = TextEditingController();
-    TextEditingController date = TextEditingController();
-    TextEditingController time = TextEditingController();
-    TextEditingController AssignedTo = TextEditingController();
-    List<String> membersTaskAssignTo = [];
     final projectController = Get.put(ProjectController());
 
     return header(
@@ -227,6 +241,7 @@ class _AddTaskState extends State<AddTask> with SingleTickerProviderStateMixin {
               },
               suggestionsCallback: (pattern) {
                 return projectController.members
+                    .map((e) => e.toString())
                     .where((member) =>
                         member.toLowerCase().contains(pattern.toLowerCase()))
                     .toList();

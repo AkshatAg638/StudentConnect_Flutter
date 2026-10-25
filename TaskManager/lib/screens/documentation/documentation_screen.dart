@@ -9,17 +9,37 @@ import 'package:studentconnect/injection/database.dart';
 import 'package:studentconnect/widgets/text.dart';
 import 'package:studentconnect/widgets/workspace/header.dart';
 
-class DocumentationScreen extends StatelessWidget {
+class DocumentationScreen extends StatefulWidget {
   const DocumentationScreen({super.key});
 
   @override
+  State<DocumentationScreen> createState() => _DocumentationScreenState();
+}
+
+class _DocumentationScreenState extends State<DocumentationScreen> {
+  late final TextEditingController titleController;
+  late final TextEditingController contentController;
+  final project = locator<Database>;
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController();
+    contentController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    contentController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String projectId = Get.arguments;
+    String projectId = Get.arguments?.toString() ?? '';
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
-    TextEditingController titleController = TextEditingController();
-    TextEditingController contentController = TextEditingController();
-    var project = locator<Database>;
 
     return header(
       child: Column(

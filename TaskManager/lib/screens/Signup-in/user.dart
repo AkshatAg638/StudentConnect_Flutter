@@ -11,6 +11,7 @@ import 'package:studentconnect/constants/colors.dart';
 import 'package:studentconnect/constants/fonts.dart';
 import 'package:studentconnect/constants/icons.dart';
 import 'package:studentconnect/constants/image.dart';
+import 'package:studentconnect/data/Authentications/google_signin.dart';
 import 'package:studentconnect/routes/routes.dart';
 import 'package:studentconnect/widgets/text.dart';
 
@@ -21,6 +22,8 @@ class User extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: Get.width,
+        height: Get.height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -31,11 +34,18 @@ class User extends StatelessWidget {
             ],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(AppImages.user),
+        child: Center(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  AppImages.user,
+                  height: Get.height * 0.32,
+                  fit: BoxFit.contain,
+                ),
             RichText(
               text: TextSpan(
                 text: 'Welcome to ',
@@ -65,82 +75,92 @@ class User extends StatelessWidget {
             ),
             BlocConsumer<LoginSignUpBloc, UserStates>(
               listener: (context, state) {
-                if (state is Userloading && state.loading == false) {
-                  Get.toNamed(AppRoutes.main);
+                if (state is UserAuthenticated) {
+                  Get.offAllNamed(AppRoutes.main);
+                } else if (state is UserAuthenticationFailed) {
+                  Utils.showtoast(state.error);
                 } else if (state is Userloading && state.loading == true) {
-                  Utils.showtoast('Signing in');
+                  Utils.showtoast('Signing in...');
                 }
               },
               builder: (context, state) {
-                if (state is EnableGoogleSignin) {
-                  return SizedBox(
-                    width: Get.width * 0.8,
-                    height: Get.height * 0.07,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.white,
-                        shape: const BeveledRectangleBorder(),
-                        textStyle: const TextStyle(
-                          color: AppColors.black,
-                        ),
-                      ),
-                      onPressed: () {
-                        BlocProvider.of<LoginSignUpBloc>(context)
-                            .add(GoogleSigning(true));
-                      },
-                      icon: Image.asset(
-                        AppIcons.googleLogo,
-                        height: Get.height * 0.04,
-                      ),
-                      label: text(
-                        title: 'Google',
-                        fontSize: Get.width * 0.05,
-                        fontWeight: AppFonts.normal,
-                        color: AppColors.black,
-                        align: TextAlign.center,
-                      ),
-                    ),
-                  );
-                } else if (state is Userloading && state.loading == true) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(
-                      2,
-                      (index) => Container(
-                        width: Get.width * 0.8,
-                        height: Get.height * 0.07,
-                        margin: EdgeInsets.only(
-                          bottom: Get.height * 0.02,
-                        ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors
-                                .workspaceGradientColor1[1]
-                                .withOpacity(0.7),
-                            shape: const BeveledRectangleBorder(),
-                          ),
-                          onPressed: () {
-                            BlocProvider.of<LoginSignUpBloc>(context)
-                                .add(LoginSignupEvent());
-                          },
-                          child: text(
-                              title: ["Login", "Signup"][index],
-                              fontSize: Get.width * 0.04,
-                              fontWeight: AppFonts.semiBold,
-                              color: AppColors.white,
-                              align: TextAlign.start),
-                        ),
-                      ),
-                    ),
+                if (state is Userloading && state.loading == true) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.white),
                   );
                 }
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: Get.width * 0.8,
+                      height: Get.height * 0.065,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            color: AppColors.black,
+                          ),
+                        ),
+                        onPressed: () {
+                          BlocProvider.of<LoginSignUpBloc>(context)
+                              .add(GoogleSigning(true));
+                        },
+                        icon: Image.asset(
+                          AppIcons.googleLogo,
+                          height: Get.height * 0.035,
+                        ),
+                        label: text(
+                          title: 'Continue with Google',
+                          fontSize: Get.width * 0.045,
+                          fontWeight: AppFonts.semiBold,
+                          color: AppColors.black,
+                          align: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: Get.height * 0.015),
+                    SizedBox(
+                      width: Get.width * 0.8,
+                      height: Get.height * 0.065,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.white, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Utils.showtoast('Entering as Demo Student...');
+                          var cred = await Auth.guestSignIn();
+                          if (cred != null) {
+                            Get.offAllNamed(AppRoutes.main);
+                          } else {
+                            Get.offAllNamed(AppRoutes.main);
+                          }
+                        },
+                        icon: const Icon(Icons.person_outline, color: AppColors.white),
+                        label: text(
+                          title: 'Continue as Demo Student',
+                          fontSize: Get.width * 0.045,
+                          fontWeight: AppFonts.semiBold,
+                          color: AppColors.white,
+                          align: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
               },
             ),
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
